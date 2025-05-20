@@ -1,21 +1,24 @@
 // src/services/thingerService.ts
-const API_BASE = 'https://backend.thinger.io/v3/users/growmatic/devices/growmatic_project/resources';
-const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJncm93bWF0aWNfb2xpdmlhIiwic3ZyIjoiYXAtc291dGhlYXN0LmF3cy50aGluZ2VyLmlvIiwidXNyIjoiZ3Jvd21hdGljIn0.FrNpAk3hemmw59Qo460ESJwXyXNhg15xSv_Jj5Gkkls';
+const API_BASE = 'https://ba5c-202-47-188-225.ngrok-free.app/api'; // Replace with your actual Laravel backend URL
+// Note: For production, consider using environment variables for the base URL
 
+// src/services/thingerService.ts
 interface SensorData {
   temperature: number;
   humidity: number;
   fanStatus: boolean;
   pumpStatus: boolean;
+  mode: 'otomatis' | 'manual'; // Tambahkan ini
 }
 
 export async function getSensorData(): Promise<SensorData> {
-  const response = await fetch(`${API_BASE}/sensor`, {
+  const response = await fetch(`${API_BASE}/sensor-data/latest`, {
     method: 'GET',
     headers: {
-      'Authorization': `Bearer ${TOKEN}`,
-      'Content-Type': 'application/json'
-    }
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    credentials: 'include' // If you're using session/cookie authentication
   });
   
   if (!response.ok) {
@@ -25,40 +28,43 @@ export async function getSensorData(): Promise<SensorData> {
   return await response.json();
 }
 
-export async function setMode(mode: 'auto' | 'manual'): Promise<void> {
-  const response = await fetch(`${API_BASE}/mode`, {
+export async function setMode(mode: 'otomatis' | 'manual'): Promise<void> {
+  const response = await fetch(`${API_BASE}/relay-control/update-mode`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${TOKEN}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
-    body: JSON.stringify({ value: mode })
+    body: JSON.stringify({ mode }),
+    credentials: 'include' // If you're using session/cookie authentication
   });
   
   if (!response.ok) throw new Error(`Failed to set mode`);
 }
 
 export async function setPumpStatus(status: boolean): Promise<void> {
-  const response = await fetch(`${API_BASE}/relay`, {
+  const response = await fetch(`${API_BASE}/relay-control/update-status`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${TOKEN}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
-    body: JSON.stringify({ value: status })
+    body: JSON.stringify({  status_relay: status, }),
+    credentials: 'include' // If you're using session/cookie authentication
   });
   
   if (!response.ok) throw new Error(`Failed to set pump status`);
 }
 
 export async function setFanStatus(status: boolean): Promise<void> {
-  const response = await fetch(`${API_BASE}/relay2`, {
+  const response = await fetch(`${API_BASE}/relay-control/update-fan-status`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${TOKEN}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
     },
-    body: JSON.stringify({ value: status })
+    body: JSON.stringify({  status_relay_fan: status, }),
+    credentials: 'include' // If you're using session/cookie authentication
   });
   
   if (!response.ok) throw new Error(`Failed to set fan status`);

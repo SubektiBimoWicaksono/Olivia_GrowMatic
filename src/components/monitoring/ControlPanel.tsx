@@ -1,21 +1,44 @@
 // src/components/monitoring/ControlPanel.tsx
-import { useState } from "react";
-import { setMode, setPumpStatus, setFanStatus } from "../../services/thingerService";
+import { useState, useEffect } from "react";
+import { setMode, setPumpStatus, setFanStatus, getSensorData } from "../../services/thingerService";
 
 export default function ControlPanel() {
-  const [mode, setModeState] = useState<'auto' | 'manual'>("auto");
+  const [mode, setModeState] = useState<'otomatis' | 'manual'>("otomatis");
   const [fanStatus, setFanStatusState] = useState(false);
   const [pumpStatus, setPumpStatusState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleModeChange = async (newMode: 'auto' | 'manual') => {
+  // Tambahkan useEffect untuk mengambil status awal dari backend
+  useEffect(() => {
+    const fetchInitialStatus = async () => {
+      try {
+        const data = await getSensorData();
+        setModeState(data.mode || "otomatis");
+        setFanStatusState(data.fanStatus);
+        setPumpStatusState(data.pumpStatus);
+      } catch (error) {
+        console.error("Error fetching initial status:", error);
+      }
+    };
+
+    fetchInitialStatus();
+  }, []);
+
+  const handleModeChange = async (newMode: 'otomatis' | 'manual') => {
     setIsLoading(true);
     try {
       await setMode(newMode);
       setModeState(newMode);
+      // Jika berpindah ke auto, update status sesuai dengan yang dikembalikan backend
+      if (newMode === 'otomatis') {
+        const data = await getSensorData();
+        setFanStatusState(data.fanStatus);
+        setPumpStatusState(data.pumpStatus);
+      }
     } catch (error) {
       console.error("Error changing mode:", error);
-      // You might want to add user feedback here (e.g., toast notification)
+      // Tambahkan feedback ke user (toast/alert)
+      alert("Failed to change mode. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -31,6 +54,7 @@ export default function ControlPanel() {
       setFanStatusState(newStatus);
     } catch (error) {
       console.error("Error changing fan status:", error);
+      alert("Failed to update fan status");
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +70,7 @@ export default function ControlPanel() {
       setPumpStatusState(newStatus);
     } catch (error) {
       console.error("Error changing pump status:", error);
+      alert("Failed to update pump status");
     } finally {
       setIsLoading(false);
     }
@@ -61,10 +86,10 @@ export default function ControlPanel() {
         {/* Mode Selector */}
         <div className="flex gap-4 mt-4 mb-6">
           <button
-            onClick={() => handleModeChange("auto")}
+            onClick={() => handleModeChange("otomatis")}
             disabled={isLoading}
             className={`flex-1 py-2 px-4 rounded-lg flex items-center justify-center gap-2 ${
-              mode === "auto" 
+              mode === "otomatis" 
                 ? "bg-blue-100 text-blue-600" 
                 : "bg-gray-100 text-gray-600"
             }`}
@@ -97,17 +122,17 @@ export default function ControlPanel() {
               </div>
               <button
                 onClick={handleFanStatusChange}
-                disabled={mode === "auto" || isLoading}
+                disabled={mode === "otomatis" || isLoading}
                 className={`px-3 py-1 rounded-md text-sm font-medium ${
                   fanStatus 
                     ? "bg-green-500 text-white" 
                     : "bg-gray-200 text-gray-700"
-                } ${mode === "auto" ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${mode === "otomatis" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {fanStatus ? "ON" : "OFF"}
               </button>
             </div>
-            {mode === "auto" && (
+            {mode === "otomatis" && (
               <p className="mt-2 text-xs text-gray-500">
                 Controlled automatically based on conditions
               </p>
@@ -125,17 +150,17 @@ export default function ControlPanel() {
               </div>
               <button
                 onClick={handlePumpStatusChange}
-                disabled={mode === "auto" || isLoading}
+                disabled={mode === "otomatis" || isLoading}
                 className={`px-3 py-1 rounded-md text-sm font-medium ${
                   pumpStatus 
                     ? "bg-green-500 text-white" 
                     : "bg-gray-200 text-gray-700"
-                } ${mode === "auto" ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${mode === "otomatis" ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 {pumpStatus ? "ON" : "OFF"}
               </button>
             </div>
-            {mode === "auto" && (
+            {mode === "otomatis" && (
               <p className="mt-2 text-xs text-gray-500">
                 Controlled automatically based on humidity
               </p>
@@ -149,7 +174,7 @@ export default function ControlPanel() {
             Current System Status
           </h4>
           <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-            {mode === "auto" 
+            {mode === "otomatis" 
               ? "System is in automatic smart mode. Devices will be intelligently controlled based on real-time sensor data."
               : "System is in full manual mode. You have complete direct control over all devices."}
           </p>
