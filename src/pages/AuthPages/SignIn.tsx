@@ -6,8 +6,9 @@ export default function SignIn() {
   return (
     <>
       <PageMeta
-        title="React.js SignIn Dashboard | TailAdmin - Next.js Admin Dashboard Template"
-        description="This is React.js SignIn Tables Dashboard page for TailAdmin - React.js Tailwind CSS Admin Dashboard Template"
+        title="Growmatic Login | Smart Mushroom Farm Monitoring"
+        description="Secure login to your Growmatic dashboard. Track and optimize your mushroom farm's environmental conditions with our IoT sensors and analytics platform."
+        // keywords="mushroom farming, IoT monitoring, growmatic login, mushroom cultivation, farm dashboard, humidity monitoring, temperature tracking"
       />
       <AuthLayout>
         <SignInForm />

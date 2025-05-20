@@ -35,12 +35,7 @@ export async function setMode(mode: 'auto' | 'manual'): Promise<void> {
     body: JSON.stringify({ value: mode })
   });
   
-  if (!response.ok) {
-    throw new Error(`Failed to set mode: ${response.statusText}`);
-  }
-  
-  // No need to parse JSON if the endpoint doesn't return anything
-  return;
+  if (!response.ok) throw new Error(`Failed to set mode`);
 }
 
 export async function setPumpStatus(status: boolean): Promise<void> {
@@ -50,14 +45,10 @@ export async function setPumpStatus(status: boolean): Promise<void> {
       'Authorization': `Bearer ${TOKEN}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ value: status ? 1 : 0 })
+    body: JSON.stringify({ value: status })
   });
   
-  if (!response.ok) {
-    throw new Error(`Failed to set pump status: ${response.statusText}`);
-  }
-  
-  return;
+  if (!response.ok) throw new Error(`Failed to set pump status`);
 }
 
 export async function setFanStatus(status: boolean): Promise<void> {
@@ -67,12 +58,8 @@ export async function setFanStatus(status: boolean): Promise<void> {
       'Authorization': `Bearer ${TOKEN}`,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ value: status ? 1 : 0 })
+    body: JSON.stringify({ value: status })
   });
   
-  if (!response.ok) {
-    throw new Error(`Failed to set fan status: ${response.statusText}`);
-  }
-  
-  return;
+  if (!response.ok) throw new Error(`Failed to set fan status`);
 }
