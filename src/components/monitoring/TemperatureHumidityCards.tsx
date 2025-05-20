@@ -1,6 +1,6 @@
 // src/components/monitoring/TemperatureHumidityCards.tsx
 import { useState, useEffect } from "react";
-import { Thermometer, Droplet, Fan, Zap } from "lucide-react";
+import { Thermometer, Droplet, Fan, Zap, Clock } from "lucide-react";
 import Badge from "../ui/badge/Badge";
 import { getSensorData } from "../../services/thingerService";
 
@@ -9,6 +9,7 @@ interface SensorData {
   humidity: number;
   fanStatus: boolean;
   pumpStatus: boolean;
+  mode?: 'otomatis' | 'manual';  // Optional jika belum digunakan di tampilan
 }
 
 export default function TemperatureHumidityCards() {
@@ -16,23 +17,30 @@ export default function TemperatureHumidityCards() {
     temperature: 0,
     humidity: 0,
     fanStatus: false,
-    pumpStatus: false
+    pumpStatus: false,
+    mode: 'otomatis' // Default mode
   });
   const [isLoading, setIsLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = async () => {
     try {
+      setIsLoading(true);
       const data = await getSensorData();
       setSensorData({
-        temperature: data.temperature || 0,
-        humidity: data.humidity || 0,
-        fanStatus: data.fanStatus || false,
-        pumpStatus: data.pumpStatus || false
+        temperature: Number(data.temperature) || 0,
+        humidity: Number(data.humidity) || 0,
+        fanStatus: Boolean(data.fanStatus),
+        pumpStatus: Boolean(data.pumpStatus),
+        mode: data.mode || 'otomatis' // Pastikan mode ada
       });
       setLastUpdated(new Date());
-    } catch (error) {
-      console.error("Error fetching sensor data:", error);
+      setError(null);
+    } catch (err) {
+      console.error("Error fetching sensor data:", err);
+      setError("Failed to load sensor data");
+      // Pertahankan data terakhir yang berhasil di-load
     } finally {
       setIsLoading(false);
     }
@@ -45,7 +53,11 @@ export default function TemperatureHumidityCards() {
   }, []);
 
   const formatNumber = (num: number): string => {
-    return num.toFixed(2);
+    return num.toFixed(1); // Menggunakan 1 desimal untuk suhu
+  };
+
+  const getStatusColor = (value: number, threshold: number) => {
+    return value > threshold ? "error" : "success";
   };
 
   return (
@@ -65,7 +77,7 @@ export default function TemperatureHumidityCards() {
               {isLoading ? 'Loading...' : `${formatNumber(sensorData.temperature)}°C`}
             </h4>
           </div>
-          <Badge color={sensorData.temperature > 26 ? "error" : "success"}>
+          <Badge color={getStatusColor(sensorData.temperature, 26)}>
             {sensorData.temperature > 26 ? "Too High" : "Optimal"}
           </Badge>
         </div>
@@ -82,10 +94,10 @@ export default function TemperatureHumidityCards() {
               Humidity
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
-              {isLoading ? 'Loading...' : `${sensorData.humidity}%`}
+              {isLoading ? 'Loading...' : `${Math.round(sensorData.humidity)}%`} {/* Bulatkan ke integer */}
             </h4>
           </div>
-          <Badge color={sensorData.humidity > 90 ? "error" : "success"}>
+          <Badge color={getStatusColor(sensorData.humidity, 90)}>
             {sensorData.humidity > 90 ? "Too High" : "Optimal"}
           </Badge>
         </div>
@@ -106,7 +118,7 @@ export default function TemperatureHumidityCards() {
             </h4>
           </div>
           <Badge color={sensorData.fanStatus ? "success" : "warning"}>
-            {sensorData.fanStatus ? "Active" : "Standby"}
+            {sensorData.mode === 'otomatis' ? "otomatis" : (sensorData.fanStatus ? "Active" : "Standby")}
           </Badge>
         </div>
       </div>
@@ -126,16 +138,25 @@ export default function TemperatureHumidityCards() {
             </h4>
           </div>
           <Badge color={sensorData.pumpStatus ? "success" : "warning"}>
-            {sensorData.pumpStatus ? "Active" : "Standby"}
+            {sensorData.mode === 'otomatis' ? "otomatis" : (sensorData.pumpStatus ? "Active" : "Standby")}
           </Badge>
         </div>
       </div>
 
-      {lastUpdated && (
-        <div className="col-span-full text-xs text-gray-500 text-right">
-          Last updated: {lastUpdated.toLocaleTimeString()}
-        </div>
-      )}
+      {/* Status Bar */}
+      <div className="col-span-full flex justify-between items-center">
+        {error && (
+          <div className="text-sm text-red-500 flex items-center">
+            ⚠️ {error}
+          </div>
+        )}
+        {lastUpdated && (
+          <div className="text-xs text-gray-500 flex items-center ml-auto">
+            <Clock className="mr-1 size-3" />
+            Last updated: {lastUpdated.toLocaleTimeString()}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
