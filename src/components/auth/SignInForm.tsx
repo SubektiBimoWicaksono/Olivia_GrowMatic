@@ -6,6 +6,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Checkbox from "../form/input/Checkbox";
 import Button from "../ui/button/Button";
+import PostLoginLoader from "../PostLoginLoader";
 
 // Type untuk form data
 type FormData = {
@@ -35,6 +36,7 @@ export default function SignInForm() {
     general?: string;
   }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const navigate = useNavigate();
 
   // Handle input changes
@@ -62,12 +64,18 @@ export default function SignInForm() {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json'
-        }
+        },
+        withCredentials: true
       });
 
       // Store token and user data
       localStorage.setItem('auth_token', response.data.access_token);
-      // localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Show the post-login loader
+      setShowLoader(true);
+      
+      // Wait for 2 seconds to show the loader before navigating
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Redirect to dashboard
       navigate('/home');
@@ -87,6 +95,7 @@ export default function SignInForm() {
       }
     } finally {
       setIsLoading(false);
+      setShowLoader(false);
     }
   };
 
@@ -213,6 +222,9 @@ export default function SignInForm() {
           </div>
         </div>
       </div>
+      
+      {/* Post-login loader */}
+      {showLoader && <PostLoginLoader />}
     </div>
   );
 }

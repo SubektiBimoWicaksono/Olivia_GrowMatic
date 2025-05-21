@@ -42,7 +42,7 @@ export default function UserDropdown() {
         }
       });
       localStorage.removeItem('auth_token');
-      window.location.href = '/signin';
+      window.location.href = '/';
     } catch (error) {
       toast.error("Gagal logout");
       console.error("Logout error:", error);
