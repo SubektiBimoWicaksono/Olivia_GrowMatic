@@ -1,89 +1,106 @@
 import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getChartData, DailySensorData } from "../../services/thingerService";
 
 export default function GrowthStatistics() {
-  const [activeTab, setActiveTab] = useState("weight");
-  
+  const [activeTab, setActiveTab] = useState<"temperature" | "humidity">("temperature");
+  const [chartData, setChartData] = useState<DailySensorData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getChartData()
+      .then((data) => setChartData(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const categories = chartData.map((d) => d.date);
+
+const series = [
+  {
+    name: activeTab === "temperature" ? "Avg Temperature" : "Avg Humidity",
+    data: activeTab === "temperature"
+      ? chartData.map((d) => Math.round(d.avg_temperature)) // Bulatkan suhu
+      : chartData.map((d) => Math.round(d.avg_humidity)),   // Bulatkan kelembapan
+  },
+];
+
   const options: ApexOptions = {
-    colors: ["#4ADE80"],
+    colors: [activeTab === "temperature" ? "#60A5FA" : "#4ADE80"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "line",
       height: 310,
-      toolbar: {
-        show: false,
-      },
+      toolbar: { show: false },
     },
-    stroke: {
-      curve: "smooth",
-      width: 3,
-    },
+    stroke: { curve: "smooth", width: 3 },
     xaxis: {
-      categories: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"],
-      title: {
-        text: "Growth Period",
-      },
+      categories,
+      title: { text: "Date" },
     },
     yaxis: {
       title: {
-        text: activeTab === "weight" ? "Weight (kg)" : "Diameter (cm)",
+        text: activeTab === "temperature" ? "Temperature (°C)" : "Humidity (%)",
       },
+      labels: {
+      formatter: (val: number) =>
+        activeTab === "temperature"
+          ? `${val}°`
+          : `${val}%`,
     },
-    tooltip: {
-      y: {
-        formatter: (val: number) => `${val} ${activeTab === "weight" ? "kg" : "cm"}`,
-      },
+  },
+  tooltip: {
+    y: {
+      formatter: (val: number) =>
+        activeTab === "temperature"
+          ? `${val}°`
+          : `${val}%`,
     },
+  },
   };
-
-  const series = [
-    {
-      name: activeTab === "weight" ? "Weight" : "Diameter",
-      data: activeTab === "weight" 
-        ? [0.2, 0.8, 1.5, 2.3, 3.5, 4.2] 
-        : [2, 5, 8, 12, 15, 18],
-    },
-  ];
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
         <div className="w-full">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Mushroom Growth Statistics
+            Daily Sensor Statistics
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Track your mushroom growth progress
+            Track your mushroom room temperature and humidity
           </p>
         </div>
         <div className="flex items-start w-full gap-3 sm:justify-end">
           <button
-            onClick={() => setActiveTab("weight")}
+            onClick={() => setActiveTab("temperature")}
             className={`px-4 py-2 rounded-lg ${
-              activeTab === "weight" 
-                ? "bg-green-100 text-green-600" 
+              activeTab === "temperature"
+                ? "bg-blue-100 text-blue-600"
                 : "bg-gray-100 text-gray-600"
             }`}
           >
-            Weight
+            Temperature
           </button>
           <button
-            onClick={() => setActiveTab("diameter")}
+            onClick={() => setActiveTab("humidity")}
             className={`px-4 py-2 rounded-lg ${
-              activeTab === "diameter" 
+              activeTab === "humidity"
                 ? "bg-green-100 text-green-600" 
                 : "bg-gray-100 text-gray-600"
             }`}
           >
-            Diameter
+            Humidity
           </button>
         </div>
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
         <div className="min-w-[1000px] xl:min-w-full">
-          <Chart options={options} series={series} type="line" height={310} />
+          {loading ? (
+            <div className="text-center py-10">Loading...</div>
+          ) : (
+            <Chart options={options} series={series} type="line" height={310} />
+          )}
         </div>
       </div>
     </div>

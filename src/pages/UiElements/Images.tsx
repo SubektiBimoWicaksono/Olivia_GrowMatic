@@ -17,12 +17,6 @@ export default function Images() {
         <ComponentCard title="Responsive image">
           <ResponsiveImage />
         </ComponentCard>
-        <ComponentCard title="Image in 2 Grid">
-          <TwoColumnImageGrid />
-        </ComponentCard>
-        <ComponentCard title="Image in 3 Grid">
-          <ThreeColumnImageGrid />
-        </ComponentCard>
       </div>
     </>
   );
